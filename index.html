@@ -1,0 +1,717 @@
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOURIZIS - Batumi Casino Tours</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;600;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: {
+                            400: '#FBBF24',
+                            500: '#D4AF37', // Classic Casino Gold
+                            600: '#B8860B',
+                        },
+                        dark: {
+                            900: '#0F172A',
+                            800: '#1E293B',
+                            700: '#334155',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Heebo', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0F172A;
+            color: #F8FAFC;
+        }
+        /* Custom scrollbar for premium feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1E293B;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D4AF37;
+            border-radius: 4px;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        .gold-gradient {
+            background: linear-gradient(135deg, #FBBF24 0%, #D4AF37 50%, #B8860B 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .btn-gold {
+            background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
+            color: #0F172A;
+            transition: all 0.3s ease;
+        }
+        .btn-gold:hover {
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- MOCK DATA ---
+        const PACKAGES = [
+            {
+                id: 'vip_junket',
+                title: 'High Roller VIP',
+                subtitle: 'רויאל קזינו / מנדרין VIP',
+                description: 'אירוח מלא על חשבון הקזינו. מותנה בהפקדה מראש של $5,000 בקופת הקזינו ומינימום 4 שעות משחק ביום.',
+                basePrice: 0,
+                includes: ['טיסה ישירה לבטומי', 'סוויטה במלון 5 כוכבים', 'העברות VIP בלימוזינה/מרצדס', 'אוכל ושתייה חופשי בקזינו', 'מנהל תיק אישי'],
+                popular: true
+            },
+            {
+                id: 'premium_player',
+                title: 'Premium Player',
+                subtitle: 'חוויית קזינו אולטימטיבית',
+                description: 'חבילה מסובסדת לשחקנים חובבים. קבלו $200 בצ\'יפים פרומו (ללא אפשרות פדייה, לשימוש בשולחנות) עם ההגעה.',
+                basePrice: 399,
+                includes: ['טיסה ישירה לבטומי', 'חדר דלוקס במלון 5 כוכבים', 'העברות משדה התעופה', '$200 פרומו צ\'יפס מתנה'],
+                popular: false
+            },
+            {
+                id: 'casino_nature',
+                title: 'קזינו & טבע בטומי',
+                subtitle: 'השילוב המושלם',
+                description: 'חבילת תיירות מלאה המשלבת ערבים בקזינו וימים של טיולים בטבע המדהים של אג\'רה. ללא התחייבות משחק.',
+                basePrice: 799,
+                includes: ['טיסה ישירה', 'מלון 4/5 כוכבים לבחירה', 'טיול ג\'יפים למפלי מאחונצטי', 'סיור טעימות יין', 'כניסה חופשית למנדרין/רויאל'],
+                popular: false
+            }
+        ];
+
+        const FLIGHTS = [
+            { id: 'f1', date: '15/06/2026 - 18/06/2026', days: 'חמישי עד ראשון', airline: 'TOURIZIS Air (Charter)', time: '08:30 -> 11:45' },
+            { id: 'f2', date: '18/06/2026 - 22/06/2026', days: 'ראשון עד חמישי', airline: 'TOURIZIS Air (Charter)', time: '14:00 -> 17:15' },
+            { id: 'f3', date: '22/06/2026 - 25/06/2026', days: 'חמישי עד ראשון', airline: 'TOURIZIS Air (Charter)', time: '09:00 -> 12:15' },
+        ];
+
+        const UPGRADES = {
+            room: [
+                { id: 'standard', name: 'חדר סטנדרט', price: 0 },
+                { id: 'sea_view', name: 'חדר נוף לים', price: 150 },
+                { id: 'suite', name: 'סוויטת קזינו', price: 400 },
+            ],
+            baggage: [
+                { id: 'hand', name: 'טרולי 8 ק"ג בלבד', price: 0 },
+                { id: 'bag_20', name: 'מזוודה 20 ק"ג', price: 45 },
+                { id: 'bag_20_vip', name: 'מזוודה 20 ק"ג + ציוד גולף/אקסטרה', price: 80 },
+            ],
+            extras: [
+                { id: 'spa', name: 'יום ספא זוגי', price: 120 },
+                { id: 'tour_gorge', name: 'טיול פרטי לערוץ מצ\'אחלה', price: 90 },
+                { id: 'vip_club', name: 'כניסה למועדון ה-VIP ברויאל קזינו', price: 250 },
+            ]
+        };
+
+        // --- ICONS (Inline SVGs) ---
+        const Icons = {
+            Plane: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>,
+            Check: () => <svg className="w-5 h-5 text-gold-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>,
+            User: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>,
+            Lock: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>,
+            Admin: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>,
+            ChevronLeft: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>,
+            Calendar: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>,
+            Close: () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        };
+
+        // --- COMPONENTS ---
+
+        const MessageBox = ({ isOpen, title, message, type = 'success', onClose }) => {
+            if (!isOpen) return null;
+            const bgType = type === 'success' ? 'bg-green-900 border-green-500 text-green-100' : 'bg-red-900 border-red-500 text-red-100';
+            
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <div className={`glass-panel border-2 ${type === 'success' ? 'border-green-500' : 'border-red-500'} rounded-2xl p-6 w-full max-w-sm transform transition-all`}>
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-xl font-bold font-serif">{title}</h3>
+                            <button onClick={onClose} className="text-gray-400 hover:text-white"><Icons.Close /></button>
+                        </div>
+                        <p className="mb-6">{message}</p>
+                        <button onClick={onClose} className="w-full btn-gold font-bold py-2 px-4 rounded-lg">
+                            הבנתי, תודה
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const Navbar = ({ setView }) => (
+            <nav className="glass-panel sticky top-0 z-40 border-b border-gray-800">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-20">
+                        <div className="flex items-center cursor-pointer" onClick={() => setView('home')}>
+                            <span className="font-serif text-3xl tracking-wider text-white">TOURI<span className="text-gold-500">ZIS</span></span>
+                            <span className="hidden sm:inline-block mr-4 px-3 py-1 bg-dark-800 text-xs rounded-full border border-gold-600 text-gold-400">
+                                Batumi Casino Tours
+                            </span>
+                        </div>
+                        <div className="flex space-x-4 space-x-reverse">
+                            <button onClick={() => setView('home')} className="text-gray-300 hover:text-gold-400 transition font-medium">חבילות</button>
+                            <button onClick={() => setView('adminLogin')} className="flex items-center text-gray-500 hover:text-gold-400 transition text-sm">
+                                <Icons.Admin />
+                                <span className="mr-1 hidden sm:inline">כניסת סוכנים</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        );
+
+        const Hero = () => (
+            <div className="relative overflow-hidden">
+                <div className="absolute inset-0 z-0">
+                    {/* Placeholder for Casino Background - using CSS gradient to simulate dark luxury atmosphere */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-dark-900 via-dark-800 to-black"></div>
+                    <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjEyLCAxNzUsIDU1LCAwLjEpIi8+PC9zdmc+')] opacity-50"></div>
+                </div>
+                <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 text-center">
+                    <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6">
+                        חוויית הקזינו של <span className="gold-gradient">בטומי</span>
+                    </h1>
+                    <p className="text-xl md:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto font-light">
+                        טיסות ישירות, אירוח כיד המלך בבתי המלון היוקרתיים ביותר ומשחקים ברויאל קזינו ומנדרין. בחרו את רמת האירוח שלכם.
+                    </p>
+                </div>
+            </div>
+        );
+
+        const BookingWizard = ({ pkg, onBack, onComplete }) => {
+            const [step, setStep] = useState(1);
+            const [flight, setFlight] = useState(FLIGHTS[0]);
+            const [passengers, setPassengers] = useState(2);
+            const [room, setRoom] = useState(UPGRADES.room[0]);
+            const [baggage, setBaggage] = useState(UPGRADES.baggage[0]);
+            const [selectedExtras, setSelectedExtras] = useState([]);
+            const [customerData, setCustomerData] = useState({ name: '', phone: '', email: '' });
+
+            // Calculate total price dynamically
+            const calcTotal = () => {
+                let total = pkg.basePrice * passengers;
+                total += room.price; // Room price is per stay, not per passenger in this model
+                total += baggage.price * passengers;
+                selectedExtras.forEach(extra => {
+                    total += extra.price * passengers;
+                });
+                return total;
+            };
+
+            const toggleExtra = (extra) => {
+                if (selectedExtras.find(e => e.id === extra.id)) {
+                    setSelectedExtras(selectedExtras.filter(e => e.id !== extra.id));
+                } else {
+                    setSelectedExtras([...selectedExtras, extra]);
+                }
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                const booking = {
+                    id: 'TRZ-' + Math.floor(Math.random() * 1000000),
+                    date: new Date().toLocaleDateString('he-IL'),
+                    customer: customerData,
+                    package: pkg.title,
+                    flight: flight.date,
+                    passengers,
+                    total: calcTotal(),
+                    requiresDeposit: pkg.basePrice === 0
+                };
+                
+                // Save to localStorage for Admin panel
+                const existing = JSON.parse(localStorage.getItem('tourizis_bookings') || '[]');
+                localStorage.setItem('tourizis_bookings', JSON.stringify([booking, ...existing]));
+                
+                onComplete(booking);
+            };
+
+            return (
+                <div className="max-w-4xl mx-auto py-12 px-4">
+                    <button onClick={onBack} className="flex items-center text-gold-500 hover:text-gold-400 mb-8 transition">
+                        <Icons.ChevronLeft /> חזור לכל החבילות
+                    </button>
+                    
+                    <div className="glass-panel rounded-2xl overflow-hidden shadow-2xl">
+                        {/* Progress Bar */}
+                        <div className="flex bg-dark-800 border-b border-dark-700">
+                            {[1, 2, 3, 4].map(s => (
+                                <div key={s} className={`flex-1 text-center py-4 text-sm font-bold ${step === s ? 'text-gold-500 border-b-2 border-gold-500 bg-dark-700' : 'text-gray-500'}`}>
+                                    שלב {s}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="p-8">
+                            <h2 className="text-3xl font-serif mb-2 text-white">{pkg.title}</h2>
+                            <p className="text-gray-400 mb-8">{pkg.subtitle}</p>
+
+                            <div className="flex flex-col lg:flex-row gap-8">
+                                {/* Left Side: Form Steps */}
+                                <div className="flex-1">
+                                    {step === 1 && (
+                                        <div className="space-y-6">
+                                            <h3 className="text-xl font-bold border-b border-gray-700 pb-2">בחירת טיסה ותאריכים</h3>
+                                            <div className="space-y-3">
+                                                {FLIGHTS.map(f => (
+                                                    <div 
+                                                        key={f.id} 
+                                                        onClick={() => setFlight(f)}
+                                                        className={`p-4 rounded-xl border cursor-pointer transition ${flight.id === f.id ? 'border-gold-500 bg-dark-700' : 'border-gray-700 hover:border-gray-500'}`}
+                                                    >
+                                                        <div className="flex justify-between items-center">
+                                                            <div className="flex items-center">
+                                                                <Icons.Calendar />
+                                                                <span className="mr-3 font-bold text-lg">{f.date}</span>
+                                                            </div>
+                                                            <span className="text-sm text-gold-400 bg-gold-400 bg-opacity-10 px-2 py-1 rounded">{f.days}</span>
+                                                        </div>
+                                                        <div className="text-sm text-gray-400 mt-2 mr-8">
+                                                            {f.airline} | המראה: {f.time}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="mt-6">
+                                                <label className="block text-sm text-gray-400 mb-2">מספר נוסעים</label>
+                                                <select 
+                                                    value={passengers} 
+                                                    onChange={(e) => setPassengers(Number(e.target.value))}
+                                                    className="w-full bg-dark-800 border border-gray-700 rounded-lg p-3 text-white focus:border-gold-500 outline-none"
+                                                >
+                                                    {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} נוסעים</option>)}
+                                                </select>
+                                            </div>
+                                            <button onClick={() => setStep(2)} className="w-full btn-gold font-bold py-4 rounded-xl mt-6 text-lg">
+                                                המשך לשדרוגים
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {step === 2 && (
+                                        <div className="space-y-6">
+                                            <h3 className="text-xl font-bold border-b border-gray-700 pb-2">שדרוגי חדר וכבודה</h3>
+                                            
+                                            <div>
+                                                <label className="block text-sm text-gray-400 mb-2">סוג חדר (המחיר לכל השהות)</label>
+                                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                    {UPGRADES.room.map(r => (
+                                                        <div 
+                                                            key={r.id} 
+                                                            onClick={() => setRoom(r)}
+                                                            className={`p-3 rounded-lg border cursor-pointer text-center transition ${room.id === r.id ? 'border-gold-500 bg-dark-700' : 'border-gray-700'}`}
+                                                        >
+                                                            <div className="font-bold">{r.name}</div>
+                                                            <div className="text-sm text-gold-400">+{r.price}$</div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-6">
+                                                <label className="block text-sm text-gray-400 mb-2">כבודה (המחיר לנוסע)</label>
+                                                <div className="space-y-3">
+                                                    {UPGRADES.baggage.map(b => (
+                                                        <div 
+                                                            key={b.id} 
+                                                            onClick={() => setBaggage(b)}
+                                                            className={`p-4 rounded-xl border cursor-pointer flex justify-between items-center transition ${baggage.id === b.id ? 'border-gold-500 bg-dark-700' : 'border-gray-700'}`}
+                                                        >
+                                                            <span>{b.name}</span>
+                                                            <span className="text-gold-400">+{b.price}$</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex gap-4 mt-8">
+                                                <button onClick={() => setStep(1)} className="flex-1 bg-dark-700 text-white font-bold py-4 rounded-xl hover:bg-dark-600 transition">חזור</button>
+                                                <button onClick={() => setStep(3)} className="flex-[2] btn-gold font-bold py-4 rounded-xl text-lg">המשך לתוספות</button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {step === 3 && (
+                                        <div className="space-y-6">
+                                            <h3 className="text-xl font-bold border-b border-gray-700 pb-2">תוספות ואטרקציות (מומלץ)</h3>
+                                            <p className="text-sm text-gray-400">המחירים המוצגים הם לאדם.</p>
+                                            <div className="space-y-3">
+                                                {UPGRADES.extras.map(extra => {
+                                                    const isSelected = selectedExtras.find(e => e.id === extra.id);
+                                                    return (
+                                                        <div 
+                                                            key={extra.id} 
+                                                            onClick={() => toggleExtra(extra)}
+                                                            className={`p-4 rounded-xl border cursor-pointer flex justify-between items-center transition ${isSelected ? 'border-gold-500 bg-dark-700' : 'border-gray-700'}`}
+                                                        >
+                                                            <div className="flex items-center">
+                                                                <div className={`w-5 h-5 rounded border mr-3 flex items-center justify-center ${isSelected ? 'bg-gold-500 border-gold-500' : 'border-gray-500'}`}>
+                                                                    {isSelected && <Icons.Check />}
+                                                                </div>
+                                                                <span>{extra.name}</span>
+                                                            </div>
+                                                            <span className="text-gold-400">+{extra.price}$</span>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+
+                                            <div className="flex gap-4 mt-8">
+                                                <button onClick={() => setStep(2)} className="flex-1 bg-dark-700 text-white font-bold py-4 rounded-xl hover:bg-dark-600 transition">חזור</button>
+                                                <button onClick={() => setStep(4)} className="flex-[2] btn-gold font-bold py-4 rounded-xl text-lg">המשך לפרטים</button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {step === 4 && (
+                                        <div className="space-y-6">
+                                            <h3 className="text-xl font-bold border-b border-gray-700 pb-2">פרטי המזמין</h3>
+                                            <form id="bookingForm" onSubmit={handleSubmit} className="space-y-4">
+                                                <div>
+                                                    <label className="block text-sm text-gray-400 mb-1">שם מלא (באנגלית כמו בדרכון)</label>
+                                                    <input required type="text" value={customerData.name} onChange={e => setCustomerData({...customerData, name: e.target.value})} className="w-full bg-dark-800 border border-gray-700 rounded-lg p-3 text-white focus:border-gold-500 outline-none" placeholder="e.g. Israel Israeli" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm text-gray-400 mb-1">טלפון נייד</label>
+                                                    <input required type="tel" value={customerData.phone} onChange={e => setCustomerData({...customerData, phone: e.target.value})} className="w-full bg-dark-800 border border-gray-700 rounded-lg p-3 text-white focus:border-gold-500 outline-none" placeholder="050-0000000" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm text-gray-400 mb-1">דואר אלקטרוני</label>
+                                                    <input required type="email" value={customerData.email} onChange={e => setCustomerData({...customerData, email: e.target.value})} className="w-full bg-dark-800 border border-gray-700 rounded-lg p-3 text-white focus:border-gold-500 outline-none" placeholder="mail@example.com" />
+                                                </div>
+
+                                                <div className="flex gap-4 mt-8">
+                                                    <button type="button" onClick={() => setStep(3)} className="flex-1 bg-dark-700 text-white font-bold py-4 rounded-xl hover:bg-dark-600 transition">חזור</button>
+                                                    <button type="submit" className="flex-[2] btn-gold font-bold py-4 rounded-xl text-lg">
+                                                        {pkg.basePrice === 0 ? 'שלח בקשה לאישור קזינו' : 'אישור ומעבר לתשלום'}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Right Side: Order Summary */}
+                                <div className="w-full lg:w-1/3 mt-8 lg:mt-0">
+                                    <div className="bg-dark-900 border border-gray-700 rounded-xl p-6 sticky top-24">
+                                        <h4 className="text-xl font-bold mb-4 font-serif border-b border-gray-800 pb-2">סיכום הזמנה</h4>
+                                        
+                                        <div className="space-y-4 text-sm">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <div className="font-bold text-gray-300">חבילה: {pkg.title}</div>
+                                                    <div className="text-gray-500">{passengers} נוסעים</div>
+                                                </div>
+                                                <div className="font-bold">${pkg.basePrice * passengers}</div>
+                                            </div>
+
+                                            <div className="flex justify-between text-gray-400">
+                                                <div>חדר: {room.name}</div>
+                                                <div>${room.price}</div>
+                                            </div>
+
+                                            <div className="flex justify-between text-gray-400">
+                                                <div>כבודה: {baggage.name} <span className="text-xs">(x{passengers})</span></div>
+                                                <div>${baggage.price * passengers}</div>
+                                            </div>
+
+                                            {selectedExtras.length > 0 && (
+                                                <div className="pt-2 border-t border-gray-800">
+                                                    <div className="text-gray-500 text-xs mb-1">תוספות:</div>
+                                                    {selectedExtras.map(e => (
+                                                        <div key={e.id} className="flex justify-between text-gray-400 mb-1">
+                                                            <div>{e.name} <span className="text-xs">(x{passengers})</span></div>
+                                                            <div>${e.price * passengers}</div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="mt-6 pt-4 border-t border-gray-700">
+                                            <div className="flex justify-between items-end">
+                                                <div className="text-lg text-gray-300">סה"כ לתשלום:</div>
+                                                <div className="text-3xl font-bold gold-gradient">${calcTotal()}</div>
+                                            </div>
+                                            {pkg.basePrice === 0 && (
+                                                <div className="mt-3 text-xs text-red-400 bg-red-400 bg-opacity-10 p-2 rounded">
+                                                    * חבילה זו מותנית בהעברת פיקדון לקזינו בסך $5,000 לאחר אישור ההזמנה.
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const AdminPanel = ({ setView }) => {
+            const [isLoggedIn, setIsLoggedIn] = useState(false);
+            const [username, setUsername] = useState('');
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+            const [bookings, setBookings] = useState([]);
+
+            useEffect(() => {
+                const saved = localStorage.getItem('tourizis_bookings');
+                if (saved) {
+                    setBookings(JSON.parse(saved));
+                }
+            }, [isLoggedIn]);
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (username === 'admin' && password === 'admin') {
+                    setIsLoggedIn(true);
+                    setError('');
+                } else {
+                    setError('שם משתמש או סיסמה שגויים. נסה admin / admin');
+                }
+            };
+
+            const clearData = () => {
+                localStorage.removeItem('tourizis_bookings');
+                setBookings([]);
+            };
+
+            if (!isLoggedIn) {
+                return (
+                    <div className="min-h-[80vh] flex items-center justify-center px-4">
+                        <div className="glass-panel p-8 rounded-2xl w-full max-w-md shadow-2xl border-t-4 border-t-gold-500">
+                            <div className="text-center mb-8">
+                                <h2 className="text-3xl font-serif text-white mb-2">TOURIZIS</h2>
+                                <p className="text-gray-400 text-sm tracking-widest uppercase">Admin Portal</p>
+                            </div>
+                            <form onSubmit={handleLogin} className="space-y-5">
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-1">שם משתמש</label>
+                                    <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full bg-dark-800 border border-gray-700 rounded-lg p-3 text-white focus:border-gold-500 outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-gray-400 mb-1">סיסמה</label>
+                                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-dark-800 border border-gray-700 rounded-lg p-3 text-white focus:border-gold-500 outline-none" />
+                                </div>
+                                {error && <p className="text-red-400 text-sm">{error}</p>}
+                                <button type="submit" className="w-full btn-gold font-bold py-3 rounded-lg text-lg mt-4">
+                                    כניסה למערכת
+                                </button>
+                            </form>
+                            <button onClick={() => setView('home')} className="w-full text-center mt-6 text-sm text-gray-500 hover:text-white transition">חזרה לאתר</button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="max-w-7xl mx-auto py-10 px-4">
+                    <div className="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 className="text-3xl font-serif text-white mb-1">פאנל ניהול הזמנות</h2>
+                            <p className="text-gold-400">ברוך שובך, מנהל</p>
+                        </div>
+                        <div className="flex space-x-4 space-x-reverse">
+                            <button onClick={clearData} className="px-4 py-2 bg-red-900 bg-opacity-30 text-red-400 rounded-lg hover:bg-opacity-50 transition text-sm">
+                                נקה נתונים (לדמו)
+                            </button>
+                            <button onClick={() => setView('home')} className="px-4 py-2 bg-dark-700 text-white rounded-lg hover:bg-dark-600 transition text-sm">
+                                יציאה וחזרה לאתר
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="glass-panel rounded-xl overflow-hidden shadow-xl">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-right">
+                                <thead className="bg-dark-800 text-gray-400 text-sm border-b border-gray-700">
+                                    <tr>
+                                        <th className="p-4 font-normal">מספר הזמנה</th>
+                                        <th className="p-4 font-normal">תאריך פנייה</th>
+                                        <th className="p-4 font-normal">שם לקוח</th>
+                                        <th className="p-4 font-normal">נייד</th>
+                                        <th className="p-4 font-normal">חבילה נבחרת</th>
+                                        <th className="p-4 font-normal">נוסעים</th>
+                                        <th className="p-4 font-normal">טיסה</th>
+                                        <th className="p-4 font-normal">סה"כ לתשלום</th>
+                                        <th className="p-4 font-normal">סטטוס</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="text-sm">
+                                    {bookings.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="9" className="p-8 text-center text-gray-500">אין הזמנות כרגע במערכת</td>
+                                        </tr>
+                                    ) : bookings.map((b, i) => (
+                                        <tr key={i} className="border-b border-gray-800 hover:bg-dark-800 transition">
+                                            <td className="p-4 font-mono text-gold-400">{b.id}</td>
+                                            <td className="p-4 text-gray-300">{b.date}</td>
+                                            <td className="p-4 font-bold">{b.customer.name}</td>
+                                            <td className="p-4 text-gray-300">{b.customer.phone}</td>
+                                            <td className="p-4">
+                                                <span className="bg-dark-700 px-2 py-1 rounded text-xs border border-gray-600">{b.package}</span>
+                                            </td>
+                                            <td className="p-4">{b.passengers}</td>
+                                            <td className="p-4 text-gray-400 text-xs">{b.flight}</td>
+                                            <td className="p-4 font-bold text-green-400">${b.total}</td>
+                                            <td className="p-4">
+                                                {b.requiresDeposit ? 
+                                                    <span className="text-xs bg-red-900 text-red-200 px-2 py-1 rounded-full border border-red-700">ממתין לפיקדון</span> :
+                                                    <span className="text-xs bg-green-900 text-green-200 px-2 py-1 rounded-full border border-green-700">שולם - כורטס</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [view, setView] = useState('home'); // home, booking, adminLogin
+            const [selectedPkg, setSelectedPkg] = useState(null);
+            const [msgBox, setMsgBox] = useState({ isOpen: false, title: '', message: '', type: 'success' });
+
+            const startBooking = (pkg) => {
+                setSelectedPkg(pkg);
+                setView('booking');
+                window.scrollTo(0, 0);
+            };
+
+            const handleBookingComplete = (bookingInfo) => {
+                setView('home');
+                window.scrollTo(0, 0);
+                
+                const title = bookingInfo.requiresDeposit ? 'בקשתך התקבלה בהצלחה!' : 'ההזמנה הושלמה!';
+                const msg = bookingInfo.requiresDeposit ? 
+                    `נציג TOURIZIS יצור איתך קשר בהקדם לקבלת פרטי הפיקדון ($5000) מול הקזינו ולאישור סופי של החבילה. מספר פנייה: ${bookingInfo.id}` :
+                    `ההזמנה כורטסה בהצלחה. כרטיסי הטיסה ווואוצ'ר המלון נשלחו למייל שלך. מספר הזמנה: ${bookingInfo.id}`;
+
+                setMsgBox({
+                    isOpen: true,
+                    title: title,
+                    message: msg,
+                    type: 'success'
+                });
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col font-sans">
+                    <Navbar setView={setView} />
+                    
+                    <main className="flex-grow">
+                        {view === 'home' && (
+                            <>
+                                <Hero />
+                                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                                    <div className="text-center mb-12">
+                                        <h2 className="text-3xl md:text-4xl font-serif mb-4">בחר את החבילה שלך</h2>
+                                        <p className="text-gray-400">שלושה מסלולים בלעדיים מותאמים אישית ללקוחות ישראלים</p>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        {PACKAGES.map((pkg) => (
+                                            <div key={pkg.id} className={`glass-panel rounded-2xl overflow-hidden flex flex-col transition transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-gold-500/20 ${pkg.popular ? 'border-gold-500 ring-2 ring-gold-500/50' : ''}`}>
+                                                {pkg.popular && (
+                                                    <div className="bg-gold-500 text-dark-900 text-center py-1 text-sm font-bold tracking-wider">
+                                                        הבחירה הפופולרית
+                                                    </div>
+                                                )}
+                                                <div className="p-8 flex-grow">
+                                                    <h3 className="text-2xl font-serif mb-1">{pkg.title}</h3>
+                                                    <p className="text-sm text-gold-400 mb-4">{pkg.subtitle}</p>
+                                                    <div className="mb-6">
+                                                        <span className="text-4xl font-bold">${pkg.basePrice}</span>
+                                                        <span className="text-gray-500 text-sm"> / בסיס לאדם</span>
+                                                    </div>
+                                                    <p className="text-gray-300 text-sm mb-6 h-16">{pkg.description}</p>
+                                                    
+                                                    <ul className="space-y-3 mb-8">
+                                                        {pkg.includes.map((item, i) => (
+                                                            <li key={i} className="flex items-start text-sm text-gray-300">
+                                                                <div className="mt-0.5 mr-2 rtl:ml-2 rtl:mr-0"><Icons.Check /></div>
+                                                                <span>{item}</span>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                                <div className="p-4 bg-dark-800 bg-opacity-50">
+                                                    <button onClick={() => startBooking(pkg)} className="w-full btn-gold font-bold py-3 rounded-lg text-lg">
+                                                        המשך להזמנה
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {view === 'booking' && selectedPkg && (
+                            <BookingWizard 
+                                pkg={selectedPkg} 
+                                onBack={() => setView('home')} 
+                                onComplete={handleBookingComplete}
+                            />
+                        )}
+
+                        {view === 'adminLogin' && (
+                            <AdminPanel setView={setView} />
+                        )}
+                    </main>
+
+                    {view !== 'adminLogin' && (
+                        <footer className="bg-black border-t border-gray-800 py-8 text-center text-gray-500 text-sm mt-auto">
+                            <p>© 2026 TOURIZIS - Exclusive Casino Tourism. All rights reserved.</p>
+                            <p className="mt-2 text-xs">Partnered with Mandarin Casino & Royal Casino Batumi</p>
+                        </footer>
+                    )}
+
+                    <MessageBox 
+                        isOpen={msgBox.isOpen} 
+                        title={msgBox.title} 
+                        message={msgBox.message} 
+                        type={msgBox.type}
+                        onClose={() => setMsgBox({...msgBox, isOpen: false})} 
+                    />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
